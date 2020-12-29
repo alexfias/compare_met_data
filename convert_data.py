@@ -1,5 +1,3 @@
-import pandas as pd
-
 def convert_reading_data(filename_wind, filename_solar, ctr_abb, output_snapshots=None):
     
     dti = pd.date_range('1979-01-01', '2018-12-31 21:00:00', freq='3H')
@@ -17,6 +15,26 @@ def convert_reading_data(filename_wind, filename_solar, ctr_abb, output_snapshot
         pd.concat([wind,solar],axis=1).reindex(output_snapshots).to_csv('p_max_pu_reading.csv')
     except: 
         pd.concat([wind,solar],axis=1).to_csv('p_max_pu_reading.csv')
+        
+    return wind, solar
+
+def convert_reading_data_merra(filename_wind, filename_solar, ctr_abb, output_snapshots=None):
+    
+    dti = pd.date_range('1980-01-01', '2018-12-31 23:00:00', freq='H')
+    
+    wind = pd.read_csv(filename_wind,index_col=0)
+    wind.index = dti
+    wind = wind.rename(columns={col: ctr_abb[col.split('_')[0]] + ' wind' for col in wind.columns})
+    
+    solar = pd.read_csv(filename_solar,index_col=0)
+    solar.index = dti
+    solar = solar.rename(columns={col: ctr_abb[col.split('_')[0]] + ' solar PV' for col in solar.columns})
+    
+    #write as csv
+    try:
+        pd.concat([wind,solar],axis=1).reindex(output_snapshots).to_csv('p_max_pu_reading_merra.csv')
+    except: 
+        pd.concat([wind,solar],axis=1).to_csv('p_max_pu_reading_merra.csv')
         
     return wind, solar
 
@@ -38,13 +56,13 @@ def convert_emhires_data(filename_wind, filename_solar, ctr_abb, output_snapshot
     try:
         pd.concat([wind,solar],axis=1).reindex(output_snapshots).to_csv('p_max_pu_emhires.csv')
     except: 
-        pd.concat([wind,solar],axis=1).to_csv('p_max_pu_reading.csv')
+        pd.concat([wind,solar],axis=1).to_csv('p_max_pu_emhires.csv')
         
     return wind, solar
-    
-    def convert_restore_data(folder_name, ctr_abb, output_snapshots=None):
+
+def convert_restore_data(folder_name, ctr_abb, output_snapshots=None):
     #read capacities
-    capa = pd.read_csv('./CapacitiesRestore2050.csv',index_col=0)
+    capa = pd.read_csv('/home/aspiro/compare_weather_datasets/RESTORE/CapacitiesRestore2050.csv',index_col=0)
     
     #wind
     for k,v in ctr_abb.items():
@@ -202,6 +220,17 @@ def convert_rninja_wind_longfuture(folder_name, ctr_abb):
             print(v+' does not exist')
     return data    
 
-def convert_rninja_data(fname, ctr_abb, wind_func, solar_func):
+def convert_rninja_data(fname, ctr_abb, wind_func, solar_func,name_add = None):
+    print(str(wind_func).split('_')[3])
     
-    return wind_func(fname, ctr_abb).drop(['onshore','offshore'],axis=1), solar_func(fname, ctr_abb)
+    wind = wind_func(fname, ctr_abb).drop(['onshore','offshore'],axis=1)
+    solar = solar_func(fname, ctr_abb)
+        #write as csv
+        
+    try:
+        pd.concat([wind,solar],axis=1).reindex(output_snapshots).to_csv('p_max_pu_rninja'+name_add+'.csv')
+    except: 
+        pd.concat([wind,solar],axis=1).to_csv('p_max_pu_rninja'+name_add+'.csv')
+
+    return wind,solar
+    
